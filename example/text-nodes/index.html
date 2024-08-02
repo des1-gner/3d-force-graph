@@ -1,31 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <title>3D Force Graph with Collisions</title>
   <style> body { margin: 0; } </style>
-
   <script src="//unpkg.com/3d-force-graph"></script>
-  <!--<script src="../../dist/3d-force-graph.js"></script>-->
+  <script src="//unpkg.com/d3-octree"></script>
+  <script src="//unpkg.com/d3-force-3d"></script>
 </head>
-
 <body>
   <div id="3d-graph"></div>
-
-  <script type="importmap">{ "imports": { "three": "//unpkg.com/three/build/three.module.js" }}</script>
+  <script type="importmap">{ "imports": { "three": "//unpkg.com/three/build/three.module.js" } }</script>
   <script type="module">
     import SpriteText from "//unpkg.com/three-spritetext/dist/three-spritetext.mjs";
 
-    const Graph = ForceGraph3D()
-      (document.getElementById('3d-graph'))
-        .jsonUrl('../datasets/miserables.json')
-        .nodeAutoColorBy('group')
-        .nodeThreeObject(node => {
-          const sprite = new SpriteText(node.id);
-          sprite.material.depthWrite = false; // make sprite background transparent
-          sprite.color = node.color;
-          sprite.textHeight = 8;
-          return sprite;
+    const N = 50;
+    const nodes = [...Array(N).keys()].map(id => ({
+      id,
+      group: Math.floor(Math.random() * 10),
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      vz: (Math.random() - 0.5) * 2
+    }));
+
+    const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
+      .graphData({ nodes, links: [] })
+      .nodeAutoColorBy('group')
+      .nodeThreeObject(node => {
+        const sprite = new SpriteText(node.id);
+        sprite.material.depthWrite = false; // make sprite background transparent
+        sprite.color = node.color;
+        sprite.textHeight = 8;
+        return sprite;
+      });
+
+    const CUBE_HALF_SIDE = 200;
+
+    function updatePositions() {
+      nodes.forEach(node => {
+        node.x += node.vx;
+        node.y += node.vy;
+        node.z += node.vz;
+
+        // bounce on box walls
+        if (Math.abs(node.x) > CUBE_HALF_SIDE) { node.vx *= -1; }
+        if (Math.abs(node.y) > CUBE_HALF_SIDE) { node.vy *= -1; }
+        if (Math.abs(node.z) > CUBE_HALF_SIDE) { node.vz *= -1; }
+
+        // bounce on other nodes
+        nodes.forEach(otherNode => {
+          if (node !== otherNode) {
+            const dx = node.x - otherNode.x;
+            const dy = node.y - otherNode.y;
+            const dz = node.z - otherNode.z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            const minDistance = 10; // minimum distance between nodes to trigger collision
+
+            if (distance < minDistance) {
+              const angle = Math.atan2(dy, dx);
+              node.vx = -Math.cos(angle);
+              node.vy = -Math.sin(angle);
+              otherNode.vx = Math.cos(angle);
+              otherNode.vy = Math.sin(angle);
+            }
+          }
         });
+      });
 
-    // Spread nodes a little wider
-    Graph.d3Force('charge').strength(-120);
+      Graph.graphData({ nodes, links: [] });
+    }
 
+    function animate() {
+      updatePositions();
+      requestAnimationFrame(animate);
+    }
+
+    animate();
   </script>
 </body>
+</html>
