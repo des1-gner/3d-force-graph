@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>3D Force Graph with Constant Movement, Collisions, and White Links</title>
+  <title>3D Force Graph with Movement and Collisions</title>
   <style> body { margin: 0; } </style>
   <script src="//unpkg.com/3d-force-graph"></script>
   <script src="//unpkg.com/d3-octree"></script>
@@ -23,10 +23,13 @@
       vz: (Math.random() - 0.5) * 2
     }));
 
-    const links = [...Array(N).keys()].map(() => ({
-      source: Math.floor(Math.random() * N),
-      target: Math.floor(Math.random() * N)
-    }));
+    // Ensure all nodes are connected
+    const links = [];
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        links.push({ source: i, target: j });
+      }
+    }
 
     const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
       .graphData({ nodes, links })
@@ -40,7 +43,7 @@
         return sprite;
       });
 
-    const CUBE_HALF_SIDE = 200;
+    const CUBE_HALF_SIDE = 1000;
 
     function updatePositions() {
       nodes.forEach(node => {
@@ -66,8 +69,10 @@
               const angle = Math.atan2(dy, dx);
               node.vx = -Math.cos(angle);
               node.vy = -Math.sin(angle);
+              node.vz = -Math.sin(angle);
               otherNode.vx = Math.cos(angle);
               otherNode.vy = Math.sin(angle);
+              otherNode.vz = Math.sin(angle);
             }
           }
         });
