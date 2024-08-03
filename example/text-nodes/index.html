@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>3D Force Graph with Fluid Movement and Collisions</title>
+  <title>3D Force Graph with Movement, Collisions, and Full Connectivity</title>
   <style> body { margin: 0; } </style>
   <script src="//unpkg.com/3d-force-graph"></script>
   <script src="//unpkg.com/d3-octree"></script>
@@ -23,10 +23,12 @@
       vz: (Math.random() - 0.5) * 2
     }));
 
-    // Create a minimally connected graph (spanning tree)
+    // Create a fully connected graph
     const links = [];
-    for (let i = 1; i < N; i++) {
-      links.push({ source: i, target: Math.floor(Math.random() * i) });
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        links.push({ source: i, target: j });
+      }
     }
 
     const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
@@ -64,13 +66,15 @@
             const minDistance = 10; // minimum distance between nodes to trigger collision
 
             if (distance < minDistance) {
-              const angle = Math.atan2(dy, dx);
-              node.vx = -Math.cos(angle);
-              node.vy = -Math.sin(angle);
-              node.vz = -Math.sin(angle);
-              otherNode.vx = Math.cos(angle);
-              otherNode.vy = Math.sin(angle);
-              otherNode.vz = Math.sin(angle);
+              const angleX = Math.atan2(dy, dx);
+              const angleY = Math.atan2(dz, dy);
+
+              node.vx = -Math.cos(angleX);
+              node.vy = -Math.sin(angleX);
+              node.vz = -Math.sin(angleY);
+              otherNode.vx = Math.cos(angleX);
+              otherNode.vy = Math.sin(angleX);
+              otherNode.vz = Math.sin(angleY);
             }
           }
         });
