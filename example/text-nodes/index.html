@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>3D Force Graph with Constant Movement, Collisions, and Links</title>
+  <title>3D Force Graph with Constant Movement, Collisions, and White Links</title>
   <style> body { margin: 0; } </style>
   <script src="//unpkg.com/3d-force-graph"></script>
   <script src="//unpkg.com/d3-octree"></script>
@@ -31,6 +31,7 @@
     const Graph = ForceGraph3D()(document.getElementById('3d-graph'))
       .graphData({ nodes, links })
       .nodeAutoColorBy('group')
+      .linkColor(() => 'white')
       .nodeThreeObject(node => {
         const sprite = new SpriteText(node.id);
         sprite.material.depthWrite = false; // make sprite background transparent
